@@ -1,85 +1,112 @@
-import Constant as Constant
+# from queue import Queue
+from collections import deque
 
+EMPTY = 0
+MAXLENGTH = 100
+MAXGLASSES = 6
+GLASSESPERMOVE = 3
+UP = 1
+DOWN = 0
+
+
+# action = ["--First State--", "Move 1 Monk:", "Move 1 Demon:", "Move 2 Monk:", "Move 1 Monk and 1 Demon:",
+# "Move 2 Demon:"]
 
 class State:
-    x: int
-    y: int
-    z: int
-    parent: object
+    def __init__(self):
+        self.arrGlasses = [1 if i % 2 == 0 else 0 for i in range(6)]
 
-    def __init__(self, x, y, z):
-        self.x = x
-        self.y = y
-        self.z = z
+    def print_state(self):
+        for glass in self.arrGlasses:
+            if glass == DOWN:
+                print("DOWN", end="\t")
+            else:
+                print("UP", end="\t")
+        print()
 
-    def printState(self):
-        print('X: {}\tY: {}\tZ: {}'.format(self.x, self.y, self.z))
+    def goal_check(self):
+        return all(glass == DOWN for glass in self.arrGlasses)
 
-    def pourXY(self):
-        if self.x > Constant.EMPTY and self.y < Constant.TANK_CAPACITY_Y:
-            pour = Constant.TANK_CAPACITY_Y - self.y
-            self.y = min(Constant.TANK_CAPACITY_Y, self.y + self.x)
-            self.x = max(self.x - pour, 0)
+
+def flip_glass(currentState: State, start_pos) -> State or None:
+    if start_pos < 1 or start_pos > (MAXGLASSES - GLASSESPERMOVE + 1):
+        return None
+
+    result = State()
+    result.arrGlasses = currentState.arrGlasses[:]
+
+    for i in range(start_pos - 1, start_pos - 1 + GLASSESPERMOVE):
+        result.arrGlasses[i] = not currentState.arrGlasses[i]
+
+    return result
+
+
+def call_operator(currentState: State, option) -> State:
+    return flip_glass(currentState, option)
+
+
+class Node:
+    def __init__(self, state, parent, no_function):
+        self.state = state
+        self.parent = parent
+        self.no_function = no_function
+
+
+def compare_states(S1: State, S2: State) -> bool:
+    return S1.arrGlasses == S2.arrGlasses
+
+
+def find_state(state, open_queue):
+    for node in open_queue:
+        if compare_states(node.state, state):
             return True
-        return False
+    return False
 
-    def pourXZ(self):
-        if self.x > Constant.EMPTY and self.z < Constant.TANK_CAPACITY_Z:
-            pour = Constant.TANK_CAPACITY_Z - self.z
-            self.z = min(Constant.TANK_CAPACITY_Z, self.z + self.x)
-            self.x = max(self.x - pour, 0)
-            return True
-        return False
 
-    def pourYX(self):
-        if self.y > Constant.EMPTY and self.x < Constant.TANK_CAPACITY_Y:
-            pour = Constant.TANK_CAPACITY_X - self.x
-            self.x = min(Constant.TANK_CAPACITY_X, self.y + self.x)
-            self.y = max(self.y - pour, 0)
-            return True
-        return False
+def BFS_algorithm(initial_state: State):
+    OpenBFS = deque()
+    CloseBFS = deque()
 
-    def pourYZ(self):
-        if self.y > Constant.EMPTY and self.z < Constant.TANK_CAPACITY_Z:
-            pour = Constant.TANK_CAPACITY_Z - self.z
-            self.z = min(Constant.TANK_CAPACITY_Z, self.z + self.y)
-            self.y = max(self.y - pour, 0)
-            return True
-        return False
+    root = Node(initial_state, None, 0)
+    OpenBFS.append(root)
 
-    def pourZX(self):
-        if self.z > Constant.EMPTY and self.x < Constant.TANK_CAPACITY_X:
-            pour = Constant.TANK_CAPACITY_X - self.x
-            self.x = min(Constant.TANK_CAPACITY_X, self.z + self.x)
-            self.z = max(self.z - pour, 0)
-            return True
-        return False
+    while OpenBFS:
+        node: Node
+        node = OpenBFS.popleft()
+        CloseBFS.append(node)
 
-    def pourZY(self):
-        if self.z > Constant.EMPTY and self.y < Constant.TANK_CAPACITY_Z:
-            pour = Constant.TANK_CAPACITY_Y - self.y
-            self.y = min(Constant.TANK_CAPACITY_Y, self.z + self.y)
-            self.z = max(self.z - pour, 0)
-            return True
-        return False
+        if node.state.goal_check():
+            return node
 
-    def call_operator(self, option):
-        match option:
-            case 1:
-                # print("Pour X to Y:")
-                return self.pourXY()
-            case 2:
-                # print("Pour X to Z:")
-                return self.pourXZ()
-            case 3:
-                # print("Pour Y to X")
-                return self.pourYX()
-            case 4:
-                # print("Pour Y to Z")
-                return self.pourYZ()
-            case 5:
-                # print("Pour Z to X")
-                return self.pourZX()
-            case 6:
-                # print("Pour Z to Y")
-                return self.pourZY()
+        for opt in range(4, 0, -1):
+            new_state = State()
+
+            new_state = call_operator(node.state, opt)
+            if find_state(new_state, CloseBFS) or find_state(new_state, OpenBFS):
+                continue
+            new_node = Node(new_state, node, opt)
+            OpenBFS.append(new_node)
+    return None
+
+
+def print_ways_to_get_goal(node):
+    stack_print = []
+
+    while node.parent is not None:
+        stack_print.append(node)
+        node = node.parent
+
+    stack_print.append(node)
+
+    no_action = 0
+    while stack_print:
+        print(f"Action {no_action}:")
+        (stack_print[-1].state.print_state())
+        print()
+        stack_print.pop()
+        no_action += 1
+
+
+cur_S = State()
+p = BFS_algorithm(cur_S)
+print_ways_to_get_goal(p)
