@@ -1,4 +1,4 @@
-thempt(L1, X, L2) :- append(L1, [X], L2).
+thempt(L1, X, L2) :- append(L1, [X], L2).z
 
 % thempt([1,2,3,4],5,L2).
 %  --> L2 = [1, 2, 3, 4, 5].
