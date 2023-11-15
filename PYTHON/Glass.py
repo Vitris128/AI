@@ -1,4 +1,4 @@
-# from queue import Queue
+
 from collections import deque
 
 EMPTY = 0
@@ -8,9 +8,6 @@ GLASSESPERMOVE = 3
 UP = 1
 DOWN = 0
 
-
-# action = ["--First State--", "Move 1 Monk:", "Move 1 Demon:", "Move 2 Monk:", "Move 1 Monk and 1 Demon:",
-# "Move 2 Demon:"]
 
 class State:
     def __init__(self):
@@ -79,7 +76,6 @@ def BFS_algorithm(initial_state: State):
             return node
 
         for opt in range(4, 0, -1):
-            new_state = State()
 
             new_state = call_operator(node.state, opt)
             if find_state(new_state, CloseBFS) or find_state(new_state, OpenBFS):
