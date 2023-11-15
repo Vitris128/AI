@@ -107,7 +107,9 @@ class Node:
         self.state = State()
         self.parent = None
         self.no_function = 0
-        self.heuristic = 0
+        self.f = 0
+        self.g = 0
+        self.h = 0
 
 
 def findState(state: State, stack):
@@ -118,21 +120,23 @@ def findState(state: State, stack):
 
 
 def sortList(lst):
-    lst.sort(key=lambda x: x.heuristic)
+    lst.sort(key=lambda x: x.f)
 
 
-def bestFirstSearch(initial_state, goal_state):
-    OpenBFS = []
-    CloseBFS = []
+def A_Star(initial_state, goal_state):
+    Open_A_Star = []
+    Close_A_Star = []
     root = Node()
     root.state = initial_state
     root.parent = None
     root.no_function = 0
-    root.heuristic = heuristicOne(root.state, goal_state)
-    OpenBFS.append(root)
-    while OpenBFS:
-        node = OpenBFS.pop(0)
-        CloseBFS.append(node)
+    root.g = 0
+    root.h = heuristicOne(root.state, goal_state)
+    root.f = root.g + root.h
+    Open_A_Star.append(root)
+    while Open_A_Star:
+        node = Open_A_Star.pop(0)
+        Close_A_Star.append(node)
         if goalCheck(node.state, goal_state):
             return node
         for opt in range(1, MAX_OPERATOR + 1):
@@ -142,19 +146,21 @@ def bestFirstSearch(initial_state, goal_state):
                 new_node.state = new_state
                 new_node.parent = node
                 new_node.no_function = opt
-                new_node.heuristic = heuristicOne(new_state, goal_state)
+                new_node.g = node.g + 1
+                new_node.h = heuristicOne(new_state, goal_state)
+                new_node.f = new_node.g + new_node.h
 
-                nodeFoundOpen, posOpen = findState(new_state, OpenBFS)
-                nodeFoundClose, posClose = findState(new_state, CloseBFS)
+                nodeFoundOpen, posOpen = findState(new_state, Open_A_Star)
+                nodeFoundClose, posClose = findState(new_state, Close_A_Star)
                 if nodeFoundOpen is None and nodeFoundClose is None:
-                    OpenBFS.append(new_node)
-                elif nodeFoundOpen is not None and nodeFoundOpen.heuristic > new_node.heuristic:
-                    del OpenBFS[posOpen]
-                    OpenBFS.insert(posOpen, new_node)
-                elif nodeFoundClose is not None and nodeFoundClose.heuristic > new_node.heuristic:
-                    del CloseBFS[posClose]
-                    OpenBFS.append(new_node)
-                sortList(OpenBFS)
+                    Open_A_Star.append(new_node)
+                elif nodeFoundOpen is not None and nodeFoundOpen.g > new_node.g:
+                    del Open_A_Star[posOpen]
+                    Open_A_Star.insert(posOpen, new_node)
+                elif nodeFoundClose is not None and nodeFoundClose.g > new_node.g:
+                    del Close_A_Star[posClose]
+                    Open_A_Star.append(new_node)
+                sortList(Open_A_Star)
     return None
 
 
@@ -177,21 +183,21 @@ def printWaysToGetGoal(node):
 if __name__ == "__main__":
     state = State()
     goal = State()
-    state.emptyCol = 1
+    state.emptyCol = 0
     state.emptyRow = 1
     state.eightPuzzel = [
-        [3, 4, 5],
-        [1, 0, 2],
-        [7, 8, 6]
+        [2, 8, 1],
+        [0, 4, 3],
+        [7, 6, 5]
     ]
 
-    goal.emptyCol = 0
-    goal.emptyRow = 0
+    goal.emptyCol = 1
+    goal.emptyRow = 1
     goal.eightPuzzel = [
-        [0, 1, 2],
-        [3, 4, 5],
-        [6, 7, 8]
+        [1, 2, 3],
+        [8, 0, 4],
+        [7, 6, 5]
     ]
 
-    p = bestFirstSearch(state, goal)
+    p = A_Star(state, goal)
     printWaysToGetGoal(p)
